@@ -22,6 +22,7 @@ import ast
 from contextlib import contextmanager
 from copy import copy
 from datetime import datetime
+from email.policy import default
 
 import transaction
 from bika.lims import api
@@ -33,9 +34,13 @@ from plone.autoform.interfaces import IFormFieldProvider
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import resolveDottedName
 from plone.supermodel import model
+from senaite.core.schema.fields import DataGridRow
+from senaite.core.schema.fields import DataGridField
+from senaite.core.z3cform.widgets.datagrid import DataGridWidgetFactory
 from senaite.databox import _
 from senaite.databox import logger
 from senaite.databox.config import DATE_INDEX_TYPES
+from senaite.databox.config import DEFAULT_PARAMS
 from senaite.databox.config import IGNORE_CATALOG_IDS
 from senaite.databox.config import IGNORE_FIELDS
 from senaite.databox.config import PARENT_TYPES
@@ -43,9 +48,27 @@ from senaite.databox.config import TMP_FOLDER_KEY
 from senaite.databox.config import UID_CATALOG
 from z3c.form.interfaces import IAddForm
 from zope import schema
+from zope.interface import Interface
 from zope.component import adapter
 from zope.interface import implementer
 from zope.interface import provider
+
+
+class IParamsRecordSchema(Interface):
+    """DataGrid Row for Params settings
+    """
+
+    name = schema.TextLine(
+        title=_(u"label_param_name", default=u"Parameter name"),
+        description=_(u"Name of parameter"),
+        required=False,
+    )
+
+    value = schema.TextLine(
+        title=_(u"label_param_value", default=u"Parameter value"),
+        description=_(u"Value of parameter"),
+        required=False,
+    )
 
 
 class ParentField(object):
@@ -64,6 +87,23 @@ class IDataBoxBehavior(model.Schema):
         description=_(u"The type to query"),
         source="senaite.databox.vocabularies.query_types",
         required=True,
+    )
+
+    directives.widget(
+        "params",
+        DataGridWidgetFactory,
+        allow_insert=False,
+        allow_delete=True,
+        allow_reorder=False,
+        auto_append=True)
+    directives.omitted(IAddForm, "params")
+    params = DataGridField(
+        title=_(u"label_params", default=u"Static parameters"),
+        description=_(u"description_params",
+                      default=u"Static params for use in the columns tab"),
+        value_type=DataGridRow(schema=IParamsRecordSchema),
+        required=False,
+        default=DEFAULT_PARAMS
     )
 
     # directives.widget("columns", multiFieldWidgetFactory, klass=u"datagrid")

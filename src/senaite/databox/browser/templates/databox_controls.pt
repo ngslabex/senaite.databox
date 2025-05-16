@@ -36,6 +36,16 @@
       <li class="nav-item" role="presentation">
         <a class="nav-link"
            i18n:translate=""
+           id="params-tab"
+           data-toggle="tab"
+           href="#params"
+           role="tab">
+          Params
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link"
+           i18n:translate=""
            id="columns-tab"
            data-toggle="tab"
            href="#columns"
@@ -224,6 +234,11 @@
             </li>
           </ul>
         </div>
+      </div>
+
+      <!-- Info TAB -->
+      <div class="tab-pane fade" id="params" role="tabpanel">
+        <metal:field use-macro="python:view.render_widget('params', mode='edit')"/>
       </div>
 
       <!-- COLUMNS CONFIG TAB -->

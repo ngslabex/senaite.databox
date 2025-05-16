@@ -34,6 +34,11 @@ PARENT_TYPES = {
     "Batch": "AnalysisRequest",
 }
 
+DEFAULT_PARAMS = [{
+    "name": "",
+    "value": "",
+}]
+
 # TODO: Move to registry config
 IGNORE_FIELDS = [
     "allowDiscussion",

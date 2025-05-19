@@ -33,7 +33,8 @@
 
   <!-- Params Datagrid Viewlet -->
   <browser:viewlet
-      name="senaite.databox.paramsdatagrid"
+      for="senaite.databox.interfaces.IDataBox"
+      name="senaite.databox.sections.params_field"
       manager="senaite.databox.interfaces.IDataBoxSection"
       class=".params.ParamsDatagridViewlet"
       permission="zope2.View"

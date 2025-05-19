@@ -34,7 +34,6 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import resolveDottedName
 from plone.supermodel import model
 from senaite.core.schema.fields import DataGridRow
-from senaite.core.schema.fields import DataGridField
 from senaite.core.z3cform.widgets.datagrid import DataGridWidgetFactory
 from senaite.databox import _
 from senaite.databox import logger
@@ -86,23 +85,6 @@ class IDataBoxBehavior(model.Schema):
         description=_(u"The type to query"),
         source="senaite.databox.vocabularies.query_types",
         required=True,
-    )
-
-    directives.widget(
-        "params",
-        DataGridWidgetFactory,
-        allow_insert=False,
-        allow_delete=True,
-        allow_reorder=False,
-        auto_append=True)
-    directives.omitted(IAddForm, "params")
-    params = schema.List(
-        title=_(u"label_params", default=u"Static parameters"),
-        description=_(u"description_params",
-                      default=u"Static params for use in the columns tab"),
-        value_type=DataGridRow(schema=IParamsRecordSchema),
-        required=False,
-        default=DEFAULT_PARAMS
     )
 
     # directives.widget("columns", multiFieldWidgetFactory, klass=u"datagrid")

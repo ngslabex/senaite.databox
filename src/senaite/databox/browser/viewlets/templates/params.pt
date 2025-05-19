@@ -7,6 +7,6 @@
     </tal:js>
 
     <!-- Records Widget -->
-    <metal:field use-macro="python:view.render_field()"/>
+    <div tal:replace="structure python:view.render_field()"/>
 
 </div>

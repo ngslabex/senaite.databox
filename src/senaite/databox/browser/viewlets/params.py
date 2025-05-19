@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from bika.lims import api
+from senaite.core.z3cform.widgets.datagrid import DataGridWidgetFactory
 from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from z3c.form.interfaces import INPUT_MODE
@@ -21,4 +23,8 @@ class ParamsDatagridViewlet(ViewletBase):
         return self.index()
 
     def render_field(self):
-        return self.context.widget("params", mode=INPUT_MODE)
+        field = api.get_fields(self.context)["params"]
+        value = field.get(self.context)
+        widget = DataGridWidgetFactory(field, self.request)
+        widget.mode = INPUT_MODE
+        return widget.render()

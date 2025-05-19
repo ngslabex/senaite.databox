@@ -87,6 +87,23 @@ class IDataBoxBehavior(model.Schema):
         required=True,
     )
 
+    directives.widget(
+        "params",
+        DataGridWidgetFactory,
+        allow_insert=False,
+        allow_delete=True,
+        allow_reorder=False,
+        auto_append=True)
+    # directives.omitted(IAddForm, "params")
+    params = schema.List(
+        title=_(u"label_params", default=u"Static parameters"),
+        description=_(u"description_params",
+                      default=u"Static params for use in the columns tab"),
+        value_type=DataGridRow(schema=IParamsRecordSchema),
+        required=False,
+        default=DEFAULT_PARAMS
+    )
+
     # directives.widget("columns", multiFieldWidgetFactory, klass=u"datagrid")
     directives.omitted(IAddForm, "columns")
     columns = schema.List(

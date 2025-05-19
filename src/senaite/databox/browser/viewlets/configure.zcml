@@ -12,6 +12,15 @@
       layer="senaite.databox.interfaces.ISenaiteDataBox"
       />
 
+  <!-- DataBox Section Viewlet Manager -->
+  <browser:viewletManager
+      name="senaite.databox.sections"
+      provides="senaite.databox.interfaces.IDataBoxSection"
+      permission="zope2.View"
+      class="plone.app.viewletmanager.manager.OrderedViewletManager"
+      layer="senaite.databox.interfaces.ISenaiteDataBox"
+      />
+
   <!-- Static Resources Viewlet -->
   <browser:viewlet
       name="senaite.databox.static"
@@ -19,6 +28,15 @@
       class="senaite.core.browser.viewlets.resources.ResourcesViewlet"
       permission="zope2.View"
       template="../static/resources.pt"
+      layer="senaite.databox.interfaces.ISenaiteDataBox"
+      />
+
+  <!-- Params Datagrid Viewlet -->
+  <browser:viewlet
+      name="senaite.databox.paramsdatagrid"
+      manager="senaite.databox.interfaces.IDataBoxSection"
+      class=".params.ParamsDatagridViewlet"
+      permission="zope2.View"
       layer="senaite.databox.interfaces.ISenaiteDataBox"
       />
 

@@ -22,7 +22,6 @@ import ast
 from contextlib import contextmanager
 from copy import copy
 from datetime import datetime
-from email.policy import default
 
 import transaction
 from bika.lims import api
@@ -59,13 +58,13 @@ class IParamsRecordSchema(Interface):
     """
 
     name = schema.TextLine(
-        title=_(u"label_param_name", default=u"Parameter name"),
+        title=_(u"label_param_name", default=u"Name"),
         description=_(u"Name of parameter"),
         required=False,
     )
 
     value = schema.TextLine(
-        title=_(u"label_param_value", default=u"Parameter value"),
+        title=_(u"label_param_value", default=u"Value"),
         description=_(u"Value of parameter"),
         required=False,
     )
@@ -97,7 +96,7 @@ class IDataBoxBehavior(model.Schema):
         allow_reorder=False,
         auto_append=True)
     directives.omitted(IAddForm, "params")
-    params = DataGridField(
+    params = schema.List(
         title=_(u"label_params", default=u"Static parameters"),
         description=_(u"description_params",
                       default=u"Static params for use in the columns tab"),
@@ -215,6 +214,15 @@ class DataBox(object):
         query.update(self.advanced_query)
         logger.info("DataBox Query: {}".format(query))
         return query
+
+    @property
+    def render_params(self):
+        """Databox params
+        """
+        params = []
+        for param in filter(lambda p: p["name"] and p["value"], self.params):
+            params.append({param["name"]: param["value"]})
+        return params
 
     def get_fields(self, portal_type=None):
         """Returns all schema fields of the selected query type
@@ -355,6 +363,16 @@ class DataBox(object):
         return getattr(self.context, "query_type", None)
 
     query_type = property(_get_query_type, _set_query_type)
+
+    # PARAMS
+
+    def _set_params(self, value):
+        self.context.params = value
+
+    def _get_params(self):
+        return getattr(self.context, "params", [])
+
+    params = property(_get_params, _set_params)
 
     # COLUMNS
 

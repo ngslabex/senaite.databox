@@ -96,12 +96,6 @@ class DataBoxView(ListingView):
             return ""
         return ViewPageTemplateFile("templates/databox_controls.pt")(self)
 
-    def render_widget(self, field_name, mode=DISPLAY_MODE):
-        """Render the field widget
-        """
-        return self.context.widget(field_name, mode=mode)
-
-
     def widgets(self, mode=DISPLAY_MODE):
         """Return the widgets for the databox
 

@@ -40,7 +40,7 @@
            data-toggle="tab"
            href="#params"
            role="tab">
-          Params
+          Parameters
         </a>
       </li>
       <li class="nav-item" role="presentation">
@@ -238,7 +238,7 @@
 
       <!-- Info TAB -->
       <div class="tab-pane fade" id="params" role="tabpanel">
-        <metal:field use-macro="python:view.render_widget('params', mode='edit')"/>
+        <div tal:replace="structure provider:senaite.databox.sections"></div>
       </div>
 
       <!-- COLUMNS CONFIG TAB -->
@@ -449,6 +449,17 @@
             </td>
             <td>
               <code class="text-dark" tal:content="view/databox/query"></code>
+            </td>
+          </tr>
+          <!-- Databox Params -->
+          <tr>
+            <td>
+              <span class="font-weight-bold text-nowrap align-top mr-2" i18n:translate="">
+                Parameters
+              </span>
+            </td>
+            <td>
+              <code class="text-dark" tal:content="view/databox/render_params"></code>
             </td>
           </tr>
         </table>

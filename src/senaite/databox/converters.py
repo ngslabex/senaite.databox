@@ -71,9 +71,22 @@ def to_long_date(obj, key, value, dfmt="%d.%m.%Y %H:%M"):
     return to_date(obj, key, value, dfmt=dfmt)
 
 
+def value_to_string(value):
+    """to string
+    """
+    if isinstance(value, six.string_types):
+        value = api.safe_unicode(value).encode("utf-8")
+    if value is None:
+        value = ""
+    return str(value)
+
+
 def convert_to(value, to_type):
     if to_type == "str":
-        return to_string(None, None, value=value)
+        return value_to_string(value)
+    if to_type == "bool":
+        false = ["0", "no", "false"]
+        return value_to_string(value).lower() not in false
     if to_type == "expression":
         code = value
     else:

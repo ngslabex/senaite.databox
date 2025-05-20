@@ -327,7 +327,7 @@
           <code>model</code> <span i18n:translate="">(wrapped senaite.supermodel context),</span>
           <code>brain</code> <span i18n:translate="">(catalog brain of the databox query type),</span>
           <code>obj</code> <span i18n:translate="">(content object of the databox query type),</span>
-          <code>api</code> <span i18n:translate="">(the senaite API module).</span>
+          <code>api</code> <span i18n:translate="">(the senaite API module),</span>
           <code>parameters</code> <span i18n:translate="">(static parameters of this DataBox).</span>
         </div>
         <div class="form-text text-muted">

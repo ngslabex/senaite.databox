@@ -98,4 +98,16 @@ class FormController(BrowserView):
                 query[record.get("index")] = record.get("value")
             return query
 
+        if key == "params":
+            params = []
+            for record in value:
+                if record.get("delete"):
+                    continue
+                params.append({
+                    "name": record.get("name"),
+                    "type": record.get("type"),
+                    "value": record.get("value"),
+                })
+            return params
+
         return value

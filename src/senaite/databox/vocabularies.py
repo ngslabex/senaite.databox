@@ -120,6 +120,7 @@ class QueryTypesVocabulary(object):
 QueryTypesVocabularyFactory = QueryTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ParameterTypesVocabulary(object):
 
     def __call__(self, context):

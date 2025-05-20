@@ -34,10 +34,15 @@ PARENT_TYPES = {
     "Batch": "AnalysisRequest",
 }
 
-DEFAULT_PARAMS = [{
-    "name": "",
-    "value": "",
-}]
+
+PARAMETER_TYPES = {
+    "str": "String",
+    "int": "Integer",
+    "float": "Float",
+    "bool": "Boolean",
+    "list": "List",
+    "expression": "Expression",
+}
 
 # TODO: Move to registry config
 IGNORE_FIELDS = [

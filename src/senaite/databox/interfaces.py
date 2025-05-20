@@ -45,7 +45,3 @@ class IFieldConverter(Interface):
 class IDataBoxJS(IViewletManager):
     """A viewlet manager that provides the JavaScripts for DataBox
     """
-
-class IDataBoxSection(IViewletManager):
-    """A viewlet manager in DataBox view to show field sections
-    """

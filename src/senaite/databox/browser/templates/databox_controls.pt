@@ -236,9 +236,81 @@
         </div>
       </div>
 
-      <!-- Info TAB -->
+      <!-- Parameters TAB -->
       <div class="tab-pane fade" id="params" role="tabpanel">
+        <!--
         <div tal:replace="structure provider:senaite.databox.sections"></div>
+        -->
+        <div class="form-text text-muted mb-2" i18n:translate="">
+          Define one or more static params values for use in the columns view.
+        </div>
+        <div class="form-row">
+          <ul id="params-list" class="col-auto list-unstyled m-0">
+            <li class="param-item d-flex flex-wrap p-0"
+                tal:repeat="parameter view/get_params;"
+                tal:define="index parameter/index;">
+
+              <!-- Name -->
+              <div class="flex-fill mr-2">
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span i18n:translate="">Name</span>
+                    </div>
+                  </div>
+                  <input type="text"
+                         class="form-control"
+                         tal:attributes="value python:parameter['name'];"
+                         name="senaite.databox.params.name:records">
+                </div>
+              </div>
+
+              <!-- Type -->
+              <div class="flex-fill mr-2">
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span i18n:translate="">Type</span>
+                    </div>
+                  </div>
+                  <select class="form-control"
+                          name="senaite.databox.params.type:records">
+                    <tal:indexes repeat="type_value view/get_parameter_types">
+                      <option tal:attributes="value type_value; selected python:type_value == parameter['type'] and 'selected' or ''">
+                        <span tal:replace="type_value"/>
+                      </option>
+                    </tal:indexes>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Value -->
+              <div class="flex-fill mr-2">
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span i18n:translate="">=</span>
+                    </div>
+                  </div>
+                  <input type="text"
+                         class="form-control"
+                         tal:attributes="value python:parameter['value'];"
+                         name="senaite.databox.params.value:records">
+                  <div class="input-group-append">
+                    <div class="input-group-text">
+                      <input class="mr-2"
+                             value="1"
+                             name="senaite.databox.params.delete:bool:records"
+                             type="checkbox"/>
+                      <span i18n:translate="">Delete</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </li>
+          </ul>
+        </div>
       </div>
 
       <!-- COLUMNS CONFIG TAB -->
@@ -257,6 +329,7 @@
           <code>brain</code> <span i18n:translate="">(catalog brain of the databox query type),</span>
           <code>obj</code> <span i18n:translate="">(content object of the databox query type),</span>
           <code>api</code> <span i18n:translate="">(the senaite API module).</span>
+          <code>parameters</code> <span i18n:translate="">(static parameters of this DataBox).</span>
         </div>
         <div class="form-text text-muted">
           <strong i18n:translate="">Examples:</strong>
@@ -268,6 +341,10 @@
             <li>
               <code>api.get_review_status(context)</code>
               <span i18n:translate="">Retrieve the review state of the current context</span>
+            </li>
+            <li>
+              <code>parameters['test']</code>
+              <span i18n:translate="">Retrieve the value for 'test' parameter from the current DataBox</span>
             </li>
           </ul>
         </div>

@@ -38,6 +38,7 @@ from senaite.app.supermodel.model import SuperModel
 from senaite.core.api import dtime
 from senaite.databox import logger
 from senaite.databox.behaviors.databox import IDataBoxBehavior
+from senaite.databox.converters import convert_to
 from senaite.databox.interfaces import IFieldConverter
 from senaite.databox.permissions import ManageDataBox
 from z3c.form.interfaces import DISPLAY_MODE
@@ -223,6 +224,15 @@ class DataBoxView(ListingView):
         return sorted(vocabulary.by_value.keys())
 
     @view.memoize
+    def get_parameter_types(self):
+        """Returns the parameter types list
+        """
+        factory = getUtility(
+            IVocabularyFactory, "senaite.databox.vocabularies.parameter_types")
+        vocabulary = factory(self.context)
+        return sorted(vocabulary.by_value.keys())
+
+    @view.memoize
     def get_catalog_indexes(self):
         indexes = self.databox.get_catalog_indexes()
         # insert an empty item
@@ -250,6 +260,12 @@ class DataBoxView(ListingView):
         return indexes
 
     @view.memoize
+    def get_params(self):
+        params = self.databox.params
+        params.update({"name": "", "type": "str", "value": ""})
+        return params
+
+    @view.memoize
     def get_advanced_query(self):
         advanced_query = self.databox.advanced_query
         # insert an empty item
@@ -264,6 +280,13 @@ class DataBoxView(ListingView):
         fields = self.databox.get_fields().keys()
         # fields.extend(self.databox.get_catalog_columns())
         return sorted(fields)
+
+    @view.memoize
+    def prepare_parameters(self):
+        parameters = {}
+        for p in self.databox.params:
+            parameters[p["name"]] = convert_to(p["value"], p["type"])
+        return parameters
 
     def get_columns(self):
         """Calculate visible columns
@@ -421,6 +444,7 @@ class DataBoxView(ListingView):
         """
         kw.update({
             "api": api,
+            "parameters": self.prepare_parameters(),
         })
         try:
             return eval(code, kw)

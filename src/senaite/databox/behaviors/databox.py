@@ -38,7 +38,6 @@ from senaite.core.z3cform.widgets.datagrid import DataGridWidgetFactory
 from senaite.databox import _
 from senaite.databox import logger
 from senaite.databox.config import DATE_INDEX_TYPES
-from senaite.databox.config import DEFAULT_PARAMS
 from senaite.databox.config import IGNORE_CATALOG_IDS
 from senaite.databox.config import IGNORE_FIELDS
 from senaite.databox.config import PARENT_TYPES
@@ -59,6 +58,14 @@ class IParamsRecordSchema(Interface):
     name = schema.TextLine(
         title=_(u"label_param_name", default=u"Name"),
         description=_(u"Name of parameter"),
+        required=False,
+    )
+
+    type = schema.Choice(
+        title=_(u"label_param_type", default=u"Type"),
+        description=_(u"Type of parameter"),
+        source="senaite.databox.vocabularies.parameter_types",
+        default="str",
         required=False,
     )
 
@@ -94,14 +101,14 @@ class IDataBoxBehavior(model.Schema):
         allow_delete=True,
         allow_reorder=False,
         auto_append=True)
-    # directives.omitted(IAddForm, "params")
+    directives.omitted(IAddForm, "params")
     params = schema.List(
         title=_(u"label_params", default=u"Static parameters"),
         description=_(u"description_params",
                       default=u"Static params for use in the columns tab"),
         value_type=DataGridRow(schema=IParamsRecordSchema),
         required=False,
-        default=DEFAULT_PARAMS
+        default=[]
     )
 
     # directives.widget("columns", multiFieldWidgetFactory, klass=u"datagrid")
@@ -218,10 +225,11 @@ class DataBox(object):
     def render_params(self):
         """Databox params
         """
-        params = []
+        params = {}
         for param in filter(lambda p: p["name"] and p["value"], self.params):
-            params.append({param["name"]: param["value"]})
+            params[param["name"]] = "%s(%s)" % (param["type"], param["value"])
         return params
+
 
     def get_fields(self, portal_type=None):
         """Returns all schema fields of the selected query type

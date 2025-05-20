@@ -72,7 +72,7 @@ def to_long_date(obj, key, value, dfmt="%d.%m.%Y %H:%M"):
 
 
 def convert_to(value, to_type):
-    code = "%s(%s)" % (to_type, value)
+    code = "%s('%s')" % (to_type, value)
     try:
         return eval(code)
     except Exception as exc:

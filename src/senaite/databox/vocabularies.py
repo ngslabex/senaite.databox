@@ -125,7 +125,7 @@ class ParameterTypesVocabulary(object):
 
     def __call__(self, context):
         vocab = []
-        for value, title in PARAMETER_TYPES:
+        for value, title in PARAMETER_TYPES.items():
             vocab.append(SimpleTerm(value, value, title))
         return SimpleVocabulary(vocab)
 

@@ -227,7 +227,7 @@ class DataBox(object):
         """
         params = {}
         for param in filter(lambda p: p["name"] and p["value"], self.params):
-            params[param["name"]] = "%s(%s)" % (param["type"], param["value"])
+            params[param["name"]] = "%s(%s)" % (param.get("type", "str"), param["value"])
         return params
 
 

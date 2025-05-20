@@ -247,8 +247,7 @@
         <div class="form-row">
           <ul id="params-list" class="col-auto list-unstyled m-0">
             <li class="param-item d-flex flex-wrap p-0"
-                tal:repeat="parameter view/get_params;"
-                tal:define="index parameter/index;">
+                tal:repeat="parameter view/get_params;">
 
               <!-- Name -->
               <div class="flex-fill mr-2">
@@ -276,7 +275,7 @@
                   <select class="form-control"
                           name="senaite.databox.params.type:records">
                     <tal:indexes repeat="type_value view/get_parameter_types">
-                      <option tal:attributes="value type_value; selected python:type_value == parameter['type'] and 'selected' or ''">
+                      <option tal:attributes="value type_value; selected python:type_value == parameter.get('type', 'str') and 'selected' or ''">
                         <span tal:replace="type_value"/>
                       </option>
                     </tal:indexes>

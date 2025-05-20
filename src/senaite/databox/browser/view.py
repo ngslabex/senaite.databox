@@ -230,7 +230,7 @@ class DataBoxView(ListingView):
         factory = getUtility(
             IVocabularyFactory, "senaite.databox.vocabularies.parameter_types")
         vocabulary = factory(self.context)
-        return sorted(vocabulary.by_value.keys())
+        return vocabulary.by_value.keys()
 
     @view.memoize
     def get_catalog_indexes(self):
@@ -262,7 +262,7 @@ class DataBoxView(ListingView):
     @view.memoize
     def get_params(self):
         params = self.databox.params
-        params.update({"name": "", "type": "str", "value": ""})
+        params.append({"name": "", "type": "str", "value": ""})
         return params
 
     @view.memoize

@@ -19,6 +19,7 @@
 # Some rights reserved, see README and LICENSE.
 
 import collections
+import copy
 import csv
 import StringIO
 import sys
@@ -261,7 +262,7 @@ class DataBoxView(ListingView):
 
     @view.memoize
     def get_params(self):
-        params = self.databox.params
+        params = copy.deepcopy(self.databox.params)
         params.append({"name": "", "type": "str", "value": ""})
         return params
 

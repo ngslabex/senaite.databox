@@ -27,6 +27,7 @@ from bika.lims.utils import get_link
 from DateTime import DateTime
 from plone.protect.utils import addTokenToUrl
 from Products.ATContentTypes.utils import DT2dt
+from senaite.core.api import dtime
 
 LINK_TO_PARENT_TYPES = [
     "Analysis",
@@ -87,6 +88,8 @@ def convert_to(value, to_type):
     if to_type == "bool":
         false = ["0", "no", "false"]
         return value_to_string(value).lower() not in false
+    if to_type == "datetime":
+        return dtime.to_dt(value)
     if to_type == "expression":
         code = value
     else:

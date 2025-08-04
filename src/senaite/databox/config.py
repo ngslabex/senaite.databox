@@ -41,6 +41,7 @@ PARAMETER_TYPES = {
     "float": "Float",
     "bool": "Boolean",
     "list": "List",
+    "datetime": "DateTime",
     "expression": "Expression",
 }
 

@@ -27,6 +27,7 @@ from bika.lims.utils import get_link
 from DateTime import DateTime
 from plone.protect.utils import addTokenToUrl
 from Products.ATContentTypes.utils import DT2dt
+from senaite.core.api import dtime
 
 LINK_TO_PARENT_TYPES = [
     "Analysis",
@@ -69,3 +70,31 @@ def to_long_date(obj, key, value, dfmt="%d.%m.%Y %H:%M"):
     """to long date
     """
     return to_date(obj, key, value, dfmt=dfmt)
+
+
+def value_to_string(value):
+    """to string
+    """
+    if isinstance(value, six.string_types):
+        value = api.safe_unicode(value).encode("utf-8")
+    if value is None:
+        value = ""
+    return str(value)
+
+
+def convert_to(value, to_type):
+    if to_type == "str":
+        return value_to_string(value)
+    if to_type == "bool":
+        false = ["0", "no", "false"]
+        return value_to_string(value).lower() not in false
+    if to_type == "datetime":
+        return dtime.to_dt(value)
+    if to_type == "expression":
+        code = value
+    else:
+        code = "%s('%s')" % (to_type, value)
+    try:
+        return eval(code)
+    except Exception as exc:
+        return repr(exc)

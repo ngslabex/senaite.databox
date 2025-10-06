@@ -354,6 +354,7 @@
           <code>brain</code> <span i18n:translate="">(catalog brain of the databox query type),</span>
           <code>obj</code> <span i18n:translate="">(content object of the databox query type),</span>
           <code>api</code> <span i18n:translate="">(the senaite API module),</span>
+          <code>dtime</code> <span i18n:translate="">(the senaite API.dtime module),</span>
           <code>parameters</code> <span i18n:translate="">(static parameters of this DataBox),</span>
           <code>query</code> <span i18n:translate="">(parameters of the query for this DataBox).</span>
         </div>

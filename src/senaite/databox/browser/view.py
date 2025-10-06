@@ -99,6 +99,7 @@ globs = {
     "next": next,
     "sorted": sorted,
     "api": api,
+    "dtime": dtime,
 }
 
 

@@ -269,7 +269,8 @@ class DataBoxView(ListingView):
         def extract_param_keys(tree):
             keys = []
             for node in ast.walk(tree):
-                if isinstance(node, ast.Subscript) and node.value.id == "parameters":
+                if (isinstance(node, ast.Subscript) and hasattr(node, 'id')) and \
+                        node.value.id == "parameters":
                     keys.append(node.slice.value.s)
                 if (isinstance(node, ast.Call) and hasattr(node, 'attr')) and \
                         node.func.attr == "get" and node.func.value.id == "parameters":

@@ -45,8 +45,8 @@ from senaite.databox.config import TMP_FOLDER_KEY
 from senaite.databox.config import UID_CATALOG
 from z3c.form.interfaces import IAddForm
 from zope import schema
-from zope.interface import Interface
 from zope.component import adapter
+from zope.interface import Interface
 from zope.interface import implementer
 from zope.interface import provider
 
@@ -227,9 +227,9 @@ class DataBox(object):
         """
         params = {}
         for param in filter(lambda p: p["name"] and p["value"], self.params):
-            params[param["name"]] = "%s(%s)" % (param.get("type", "str"), param["value"])
+            params[param["name"]] = "%s(%s)" % (
+                param.get("type", "str"), param["value"])
         return params
-
 
     def get_fields(self, portal_type=None):
         """Returns all schema fields of the selected query type

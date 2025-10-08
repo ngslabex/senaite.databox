@@ -256,10 +256,9 @@ class DataBoxView(ListingView):
                 if parameter and parameter.get('_deps', False):
                     for p_name in parameter['_deps']:
                         if p_name in acc:
-                            logger.warn(
-                                "PARAMETER [{}] contains [{}] recursive call.".format(name, p_name))
-                            acc.append(RuntimeError(
-                                _(u"PARAMETER [{}] contains [{}] recursive call.".format(name, p_name))))
+                            msg = "PARAMETER [{}] contains [{}] recursive call.".format(name, p_name)
+                            logger.warn(msg)
+                            acc.append(RuntimeError(api.safe_unicode(msg)))
                             break
                         find_path_acc(p_name, acc)
                 return acc
@@ -322,7 +321,7 @@ class DataBoxView(ListingView):
                 # TODO check if allowed methods called only. Check it in p["p_code"].co_names before eval
                 try:
                     locals = {
-                        "parameters": copy.deepcopy(self.parameters),
+                        "parameters": self.parameters,
                         "query": self.contentFilter
                     }
                     value = eval(p["p_code"], globs, locals)
@@ -578,7 +577,7 @@ class DataBoxView(ListingView):
         """Executed the code
         """
         kw.update({
-            "parameters": copy.deepcopy(self.parameters),
+            "parameters": self.parameters,
             "query": self.contentFilter,
         })
         kw.update(globs)

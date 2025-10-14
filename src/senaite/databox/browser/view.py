@@ -253,27 +253,38 @@ class DataBoxView(ListingView):
                 acc.append(name)
                 parameter = get_param_by_name(name)
 
-                if parameter and parameter.get('_deps', False):
-                    for p_name in parameter['_deps']:
+                if parameter and parameter.get("_deps", False):
+                    for p_name in parameter["_deps"]:
                         if p_name in acc:
-                            msg = "PARAMETER [{}] contains [{}] recursive call.".format(name, p_name)
-                            logger.warn(msg)
-                            acc.append(RuntimeError(api.safe_unicode(msg)))
-                            break
+                            raise RuntimeError("PARAMETER [{}] contains [{}] recursive call.".format(
+                                name, p_name))
                         find_path_acc(p_name, acc)
                 return acc
 
             return find_path_acc(name, [])[1:]
 
         def extract_param_keys(tree):
+            # TODO: _name_counter is a workaround for avoiding parameters recursion
+            # it counts how many times 'parameters' Name node is found in a tree
+            # and compares it with the number of keys found.
+            # If they are not equal, it means that there is a recursion detected
+            # and we raise Runtime exception
             keys = []
+            _name_counter = 0
             for node in ast.walk(tree):
-                if (isinstance(node, ast.Subscript) and hasattr(node, 'id')) and \
+                if (isinstance(node, ast.Name) and node.id == "parameters"):
+                    _name_counter += 1
+                if (isinstance(node, ast.Subscript) and hasattr(node, 'value')) and \
                         node.value.id == "parameters":
                     keys.append(node.slice.value.s)
-                if (isinstance(node, ast.Call) and hasattr(node, 'attr')) and \
-                        node.func.attr == "get" and node.func.value.id == "parameters":
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and
+                        node.func.attr == "get" and node.func.value.id == "parameters"):
                     keys.append(node.args[0].s)
+
+            if _name_counter != len(keys):
+                raise RuntimeError(
+                    "parameters object called with no get or slice accessor")
+
             return keys
 
         # get list of names for literals (primitive) parameters
@@ -283,27 +294,39 @@ class DataBoxView(ListingView):
         # build the list
         for p in self.databox.params:
             if p["type"] == "expression":
-                p_tree = ast.parse(p["value"], mode="eval")
                 expr_p = {
                     "name": p["name"],
                     "type": p["type"],
                     "value": p["value"],
-                    "p_tree": p_tree,
-                    "p_code": compile(p_tree, "<string>", "eval"),
-                    "_deps": [p_name for p_name in set(extract_param_keys(p_tree))
-                              if p_name not in literal_names],
-                    "path": [],
-                    "errors": []
                 }
+
+                try:
+                    expr_p["p_tree"] = ast.parse(p["value"], mode="eval")
+                    expr_p["p_code"] = compile(
+                        expr_p["p_tree"], "<string>", "eval")
+                except Exception as exc:
+                    expr_p["error"] = RuntimeError(
+                        "{} parse error: {}".format(p["name"], repr(exc)))
+
+                if not expr_p.get("error"):
+                    try:
+                        expr_p["_deps"] = [p_name for p_name in set(
+                            extract_param_keys(expr_p["p_tree"])) if p_name not in literal_names]
+                    except Exception as exc:
+                        expr_p["error"] = RuntimeError(
+                            "{} extraction fail: {}".format(p["name"], repr(exc)))
+
                 params.append(expr_p)
             else:
                 params.append(p)
 
         # fill path values and return the list sorted and ready for evaluation
-        for p in params:
-            deps = find_path(p['name'], params)
-            p["path"] = deps
-            p["errors"] = [d for d in deps if isinstance(d, RuntimeError)]
+        for p in filter(lambda x: x["type"] == "expression" and x.get("_deps") and
+                        not x.get("error", False), params):
+            try:
+                p["path"] = find_path(p['name'], params)
+            except Exception as exc:
+                p["error"] = exc
 
         return sorted(params, key=cmp_to_key(param_cmp), reverse=True)
 
@@ -315,9 +338,10 @@ class DataBoxView(ListingView):
                 self.parameters[p["name"]] = convert_to(p["value"], p["type"])
             else:
                 value = None
-                if p["errors"]:
-                    self.parameters[p["name"]] = p["errors"][0]
+                if p.get("error"):
+                    self.parameters[p["name"]] = p["error"]
                     continue
+                
                 # TODO check if allowed methods called only. Check it in p["p_code"].co_names before eval
                 try:
                     locals = {
@@ -326,7 +350,9 @@ class DataBoxView(ListingView):
                     }
                     value = eval(p["p_code"], globs, locals)
                 except Exception as exc:
-                    value = repr(exc)
+                    value = RuntimeError(
+                        "{} eval failed: {}".format(p["name"], repr(exc)))
+                
                 self.parameters[p["name"]] = value
 
     @property

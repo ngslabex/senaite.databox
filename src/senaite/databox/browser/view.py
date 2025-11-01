@@ -74,6 +74,8 @@ globs = {
     "float": float,
     "format": format,
     "frozenset": frozenset,
+    "getattr": getattr,
+    "hasattr": hasattr,
     "hex": hex,
     "int": int,
     "len": len,
@@ -274,10 +276,10 @@ class DataBoxView(ListingView):
             for node in ast.walk(tree):
                 if (isinstance(node, ast.Name) and node.id == "parameters"):
                     _name_counter += 1
-                if (isinstance(node, ast.Subscript) and hasattr(node, 'value')) and \
-                        node.value.id == "parameters":
+                if (isinstance(node, ast.Subscript) and hasattr(node, "value") and \
+                        (hasattr(node.value, 'id') and node.value.id == "parameters")):
                     keys.append(node.slice.value.s)
-                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and \
                         node.func.attr == "get" and node.func.value.id == "parameters"):
                     keys.append(node.args[0].s)
 

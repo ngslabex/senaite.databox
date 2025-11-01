@@ -18,19 +18,29 @@
 # Copyright 2018-2025 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
-from datetime import datetime
-
+import ast
 import six
-
+from datetime import datetime
 from bika.lims import api
 from bika.lims.utils import get_link
 from DateTime import DateTime
 from plone.protect.utils import addTokenToUrl
 from Products.ATContentTypes.utils import DT2dt
+from senaite.core.api import dtime
+
 
 LINK_TO_PARENT_TYPES = [
     "Analysis",
 ]
+
+PARAMETER_LITERALS = {
+    "str": str,
+    "int": int,
+    "float": float,
+    "datetime": dtime.to_dt,
+    "bool": lambda val: val.lower() not in ["0", "no", "false"],
+    "list": lambda val: list(ast.literal_eval(val))
+}
 
 
 def to_string(obj, key, value, **kw):
@@ -69,3 +79,12 @@ def to_long_date(obj, key, value, dfmt="%d.%m.%Y %H:%M"):
     """to long date
     """
     return to_date(obj, key, value, dfmt=dfmt)
+
+
+def convert_to(value, to_type):
+    if to_type in PARAMETER_LITERALS:
+        try:
+            return PARAMETER_LITERALS[to_type](value)
+        except Exception as exc:
+            return repr(exc)
+    return str(value)

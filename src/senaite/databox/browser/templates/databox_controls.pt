@@ -36,6 +36,16 @@
       <li class="nav-item" role="presentation">
         <a class="nav-link"
            i18n:translate=""
+           id="params-tab"
+           data-toggle="tab"
+           href="#params"
+           role="tab">
+          Parameters
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link"
+           i18n:translate=""
            id="columns-tab"
            data-toggle="tab"
            href="#columns"
@@ -226,6 +236,108 @@
         </div>
       </div>
 
+      <!-- Parameters TAB -->
+      <div class="tab-pane fade" id="params" role="tabpanel">
+        <!--
+        <div tal:replace="structure provider:senaite.databox.sections"></div>
+        -->
+        <div class="form-text text-muted mb-2" i18n:translate="">
+          Define one or more static params values for use in the columns view.
+        </div>
+        <div class="form-text text-muted" i18n:translate="">
+          Parameters are literals or expressions evaluated prior to the execution of the DataBox main query. 
+          Within the Columns tab, they are exposed as an ordinal dictionary and can be accessed using 
+          <code>parameters[<i>parameter_name</i>]</code> or <code>parameters.get(<i>parameter_name</i>)</code>. 
+          This allows you to build complex reports directly in DataBox, such as performing 
+          JOIN operations, optimizing report performance and etc.
+        </div>
+        <div class="form-text text-muted">
+          <strong i18n:translate="">NOTE:</strong>
+          <ul>
+            <li>
+              Parameters can be chained by referencing each other through the <code>parameters</code> object, 
+              using either <code>parameters[<i>parameter_name</i>]</code> or <code>parameters.get(<i>parameter_name</i>)</code>.
+              This enables the creation of highly sophisticated data preparation steps.
+            </li>
+            <li>
+              For expression-type parameters, you have access to the <code>query</code>, <code>api</code>, <code>dtime</code>, 
+              and most core functions and objects.
+            </li>
+          </ul>
+        </div>
+        <div class="form-text text-muted mb-4">
+          <strong i18n:translate="">Caution:</strong>
+          <span i18n:translate="">
+            Avoid recursive references within the parameters table and prevent the use of potentially harmful Python code.          </span>
+        </div>
+        <div class="form-row">
+          <ul id="params-list" class="col-auto list-unstyled m-0">
+            <li class="param-item d-flex flex-wrap p-0"
+                tal:repeat="parameter view/get_params;">
+
+              <!-- Name -->
+              <div class="flex-fill mr-2">
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span i18n:translate="">Name</span>
+                    </div>
+                  </div>
+                  <input type="text"
+                         class="form-control"
+                         tal:attributes="value python:parameter['name'];"
+                         name="senaite.databox.params.name:records">
+                </div>
+              </div>
+
+              <!-- Type -->
+              <div class="flex-fill mr-2">
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span i18n:translate="">Type</span>
+                    </div>
+                  </div>
+                  <select class="form-control"
+                          name="senaite.databox.params.type:records">
+                    <tal:indexes repeat="type_value view/get_parameter_types">
+                      <option tal:attributes="value type_value; selected python:type_value == parameter.get('type', 'str') and 'selected' or ''">
+                        <span tal:replace="type_value"/>
+                      </option>
+                    </tal:indexes>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Value -->
+              <div class="flex-fill mr-2">
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span i18n:translate="">=</span>
+                    </div>
+                  </div>
+                  <input type="text"
+                         class="form-control"
+                         tal:attributes="value python:parameter['value'];"
+                         name="senaite.databox.params.value:records">
+                  <div class="input-group-append">
+                    <div class="input-group-text">
+                      <input class="mr-2"
+                             value="1"
+                             name="senaite.databox.params.delete:bool:records"
+                             type="checkbox"/>
+                      <span i18n:translate="">Delete</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </li>
+          </ul>
+        </div>
+      </div>
+
       <!-- COLUMNS CONFIG TAB -->
       <div class="tab-pane fade" id="columns" role="tabpanel">
         <div class="form-text text-muted mb-2" i18n:translate="">
@@ -241,7 +353,10 @@
           <code>model</code> <span i18n:translate="">(wrapped senaite.supermodel context),</span>
           <code>brain</code> <span i18n:translate="">(catalog brain of the databox query type),</span>
           <code>obj</code> <span i18n:translate="">(content object of the databox query type),</span>
-          <code>api</code> <span i18n:translate="">(the senaite API module).</span>
+          <code>api</code> <span i18n:translate="">(the senaite API module),</span>
+          <code>dtime</code> <span i18n:translate="">(the senaite API.dtime module),</span>
+          <code>parameters</code> <span i18n:translate="">(static parameters of this DataBox),</span>
+          <code>query</code> <span i18n:translate="">(parameters of the query for this DataBox).</span>
         </div>
         <div class="form-text text-muted">
           <strong i18n:translate="">Examples:</strong>
@@ -254,9 +369,13 @@
               <code>api.get_review_status(context)</code>
               <span i18n:translate="">Retrieve the review state of the current context</span>
             </li>
+            <li>
+              <code>parameters['test']</code> or <code>parameters.get('test')</code>
+              <span i18n:translate="">Retrieve the value for 'test' parameter from the current DataBox</span>
+            </li>
           </ul>
         </div>
-        <div class="form-text text-muted">
+        <div class="form-text text-muted mb-2">
           <strong i18n:translate="">Caution:</strong>
           <span i18n:translate="">
             Using the code field executes the Python
@@ -434,6 +553,17 @@
             </td>
             <td>
               <code class="text-dark" tal:content="view/databox/query"></code>
+            </td>
+          </tr>
+          <!-- Databox Params -->
+          <tr>
+            <td>
+              <span class="font-weight-bold text-nowrap align-top mr-2" i18n:translate="">
+                Parameters
+              </span>
+            </td>
+            <td>
+              <code class="text-dark" tal:content="view/databox/render_params"></code>
             </td>
           </tr>
         </table>

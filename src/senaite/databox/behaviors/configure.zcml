@@ -16,5 +16,5 @@
       for="plone.dexterity.interfaces.IDexterityContent"
       marker="senaite.databox.interfaces.IDataBox"
       />
-
+  
 </configure>

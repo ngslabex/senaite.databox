@@ -33,6 +33,8 @@ from plone.autoform.interfaces import IFormFieldProvider
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import resolveDottedName
 from plone.supermodel import model
+from senaite.core.schema.fields import DataGridRow
+from senaite.core.z3cform.widgets.datagrid import DataGridWidgetFactory
 from senaite.databox import _
 from senaite.databox import logger
 from senaite.databox.config import DATE_INDEX_TYPES
@@ -44,8 +46,34 @@ from senaite.databox.config import UID_CATALOG
 from z3c.form.interfaces import IAddForm
 from zope import schema
 from zope.component import adapter
+from zope.interface import Interface
 from zope.interface import implementer
 from zope.interface import provider
+
+
+class IParamsRecordSchema(Interface):
+    """DataGrid Row for Params settings
+    """
+
+    name = schema.TextLine(
+        title=_(u"label_param_name", default=u"Name"),
+        description=_(u"Name of parameter"),
+        required=False,
+    )
+
+    type = schema.Choice(
+        title=_(u"label_param_type", default=u"Type"),
+        description=_(u"Type of parameter"),
+        source="senaite.databox.vocabularies.parameter_types",
+        default="str",
+        required=False,
+    )
+
+    value = schema.TextLine(
+        title=_(u"label_param_value", default=u"Value"),
+        description=_(u"Value of parameter"),
+        required=False,
+    )
 
 
 class ParentField(object):
@@ -64,6 +92,23 @@ class IDataBoxBehavior(model.Schema):
         description=_(u"The type to query"),
         source="senaite.databox.vocabularies.query_types",
         required=True,
+    )
+
+    directives.widget(
+        "params",
+        DataGridWidgetFactory,
+        allow_insert=False,
+        allow_delete=True,
+        allow_reorder=False,
+        auto_append=True)
+    directives.omitted(IAddForm, "params")
+    params = schema.List(
+        title=_(u"label_params", default=u"Static parameters"),
+        description=_(u"description_params",
+                      default=u"Static params for use in the columns tab"),
+        value_type=DataGridRow(schema=IParamsRecordSchema),
+        required=False,
+        default=[]
     )
 
     # directives.widget("columns", multiFieldWidgetFactory, klass=u"datagrid")
@@ -175,6 +220,16 @@ class DataBox(object):
         query.update(self.advanced_query)
         logger.info("DataBox Query: {}".format(query))
         return query
+
+    @property
+    def render_params(self):
+        """Databox params
+        """
+        params = {}
+        for param in filter(lambda p: p["name"] and p["value"], self.params):
+            params[param["name"]] = "%s(%s)" % (
+                param.get("type", "str"), param["value"])
+        return params
 
     def get_fields(self, portal_type=None):
         """Returns all schema fields of the selected query type
@@ -315,6 +370,16 @@ class DataBox(object):
         return getattr(self.context, "query_type", None)
 
     query_type = property(_get_query_type, _set_query_type)
+
+    # PARAMS
+
+    def _set_params(self, value):
+        self.context.params = value
+
+    def _get_params(self):
+        return getattr(self.context, "params", [])
+
+    params = property(_get_params, _set_params)
 
     # COLUMNS
 

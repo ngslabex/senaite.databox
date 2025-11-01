@@ -18,12 +18,16 @@
 # Copyright 2018-2025 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
+import ast
 import collections
+import copy
 import csv
+import math
 import StringIO
+import six
 import sys
 
-import six
+from functools import cmp_to_key
 
 from bika.lims import api
 from bika.lims import bikaMessageFactory as _
@@ -38,6 +42,7 @@ from senaite.app.supermodel.model import SuperModel
 from senaite.core.api import dtime
 from senaite.databox import logger
 from senaite.databox.behaviors.databox import IDataBoxBehavior
+from senaite.databox.converters import convert_to
 from senaite.databox.interfaces import IFieldConverter
 from senaite.databox.permissions import ManageDataBox
 from z3c.form.interfaces import DISPLAY_MODE
@@ -51,8 +56,53 @@ from zope.interface import alsoProvides
 from zope.schema.interfaces import IField
 from zope.schema.interfaces import IVocabularyFactory
 
+
 DEFAULT_REF = "title"
 REF_FIELD_TYPES = ["reference", "uidreference"]
+
+# Default globals
+globs = {
+    "__builtins__": {},
+    "all": all,
+    "any": any,
+    "bool": bool,
+    "chr": chr,
+    "cmp": cmp,
+    "complex": complex,
+    "divmod": divmod,
+    "enumerate": enumerate,
+    "float": float,
+    "format": format,
+    "frozenset": frozenset,
+    "getattr": getattr,
+    "hasattr": hasattr,
+    "hex": hex,
+    "int": int,
+    "len": len,
+    "list": list,
+    "long": long,
+    "math": math,
+    "max": max,
+    "min": min,
+    "oct": oct,
+    "ord": ord,
+    "pow": pow,
+    "range": range,
+    "reversed": reversed,
+    "round": round,
+    "str": str,
+    "sum": sum,
+    "tuple": tuple,
+    "xrange": xrange,
+    "map": map,
+    "filter": filter,
+    "False": False,
+    "True": True,
+    "next": next,
+    "sorted": sorted,
+    "api": api,
+    "dtime": dtime,
+}
 
 
 class DataBoxView(ListingView):
@@ -62,17 +112,13 @@ class DataBoxView(ListingView):
 
     def __init__(self, context, request):
         super(DataBoxView, self).__init__(context, request)
-
         self.contentFilter = self.databox.query
-
         self.pagesize = self.databox.limit
         self.context_actions = {}
         self.title = self.context.Title()
         self.description = self.context.Description()
         self.show_select_column = True
-
         self.columns = self.get_columns()
-
         self.review_states = [
             {
                 "id": "default",
@@ -83,6 +129,7 @@ class DataBoxView(ListingView):
                 "columns": self.columns.keys()
             }
         ]
+        self.parameters = collections.OrderedDict()
 
     def update(self):
         super(DataBoxView, self).update()
@@ -133,6 +180,7 @@ class DataBoxView(ListingView):
     def get_rows(self, header=True):
         """Extract the rows from the folderitems
         """
+        self.inflate_params()
         if header:
             yield map(lambda v: v.get("title"), self.columns.values())
         keys = self.columns.keys()
@@ -187,6 +235,128 @@ class DataBoxView(ListingView):
         response.setHeader("Pragma", "no-cache")
         response.write(data)
 
+    def build_params(self):
+        """ Returns ready for evaluation list of parameters
+        """
+        params = []
+
+        def param_cmp(p1, p2):
+            if p1["type"] != p2["type"]:
+                return 1 if p2["type"] == "expression" else -1
+            return 1 if set(p1.get("path", [])).issubset(p2.get("path", [])) else -1
+
+        def find_path(name, p_list):
+            """ Traverse all parameters object calls
+            """
+            def get_param_by_name(name):
+                return next((p for p in p_list if p['name'] == name), None)
+
+            def find_path_acc(name, acc):
+                acc.append(name)
+                parameter = get_param_by_name(name)
+
+                if parameter and parameter.get("_deps", False):
+                    for p_name in parameter["_deps"]:
+                        if p_name in acc:
+                            raise RuntimeError("PARAMETER [{}] contains [{}] recursive call.".format(
+                                name, p_name))
+                        find_path_acc(p_name, acc)
+                return acc
+
+            return find_path_acc(name, [])[1:]
+
+        def extract_param_keys(tree):
+            # TODO: _name_counter is a workaround for avoiding parameters recursion
+            # it counts how many times 'parameters' Name node is found in a tree
+            # and compares it with the number of keys found.
+            # If they are not equal, it means that there is a recursion detected
+            # and we raise Runtime exception
+            keys = []
+            _name_counter = 0
+            for node in ast.walk(tree):
+                if (isinstance(node, ast.Name) and node.id == "parameters"):
+                    _name_counter += 1
+                if (isinstance(node, ast.Subscript) and hasattr(node, "value") and \
+                        (hasattr(node.value, 'id') and node.value.id == "parameters")):
+                    keys.append(node.slice.value.s)
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and \
+                        node.func.attr == "get" and node.func.value.id == "parameters"):
+                    keys.append(node.args[0].s)
+
+            if _name_counter != len(keys):
+                raise RuntimeError(
+                    "parameters object called with no get or slice accessor")
+
+            return keys
+
+        # get list of names for literals (primitive) parameters
+        literal_names = [p["name"]
+                         for p in self.databox.params if p["type"] not in ["expression"]]
+
+        # build the list
+        for p in self.databox.params:
+            if p["type"] == "expression":
+                expr_p = {
+                    "name": p["name"],
+                    "type": p["type"],
+                    "value": p["value"],
+                }
+
+                try:
+                    expr_p["p_tree"] = ast.parse(p["value"], mode="eval")
+                    expr_p["p_code"] = compile(
+                        expr_p["p_tree"], "<string>", "eval")
+                except Exception as exc:
+                    expr_p["error"] = RuntimeError(
+                        "{} parse error: {}".format(p["name"], repr(exc)))
+
+                if not expr_p.get("error"):
+                    try:
+                        expr_p["_deps"] = [p_name for p_name in set(
+                            extract_param_keys(expr_p["p_tree"])) if p_name not in literal_names]
+                    except Exception as exc:
+                        expr_p["error"] = RuntimeError(
+                            "{} extraction fail: {}".format(p["name"], repr(exc)))
+
+                params.append(expr_p)
+            else:
+                params.append(p)
+
+        # fill path values and return the list sorted and ready for evaluation
+        for p in filter(lambda x: x["type"] == "expression" and x.get("_deps") and
+                        not x.get("error", False), params):
+            try:
+                p["path"] = find_path(p['name'], params)
+            except Exception as exc:
+                p["error"] = exc
+
+        return sorted(params, key=cmp_to_key(param_cmp), reverse=True)
+
+    def inflate_params(self):
+        """ Get ready Params prior to execution of main query
+        """
+        for p in self.build_params():
+            if p["type"] not in ["expression"]:
+                self.parameters[p["name"]] = convert_to(p["value"], p["type"])
+            else:
+                value = None
+                if p.get("error"):
+                    self.parameters[p["name"]] = p["error"]
+                    continue
+                
+                # TODO check if allowed methods called only. Check it in p["p_code"].co_names before eval
+                try:
+                    locals = {
+                        "parameters": self.parameters,
+                        "query": self.contentFilter
+                    }
+                    value = eval(p["p_code"], globs, locals)
+                except Exception as exc:
+                    value = RuntimeError(
+                        "{} eval failed: {}".format(p["name"], repr(exc)))
+                
+                self.parameters[p["name"]] = value
+
     @property
     @view.memoize
     def databox(self):
@@ -223,6 +393,15 @@ class DataBoxView(ListingView):
         return sorted(vocabulary.by_value.keys())
 
     @view.memoize
+    def get_parameter_types(self):
+        """Returns the parameter types list
+        """
+        factory = getUtility(
+            IVocabularyFactory, "senaite.databox.vocabularies.parameter_types")
+        vocabulary = factory(self.context)
+        return vocabulary.by_value.keys()
+
+    @view.memoize
     def get_catalog_indexes(self):
         indexes = self.databox.get_catalog_indexes()
         # insert an empty item
@@ -248,6 +427,12 @@ class DataBoxView(ListingView):
         # insert an empty item
         indexes.insert(0, "")
         return indexes
+
+    @view.memoize
+    def get_params(self):
+        params = copy.deepcopy(self.databox.params)
+        params.append({"name": "", "type": "str", "value": ""})
+        return params
 
     @view.memoize
     def get_advanced_query(self):
@@ -420,12 +605,18 @@ class DataBoxView(ListingView):
         """Executed the code
         """
         kw.update({
-            "api": api,
+            "parameters": self.parameters,
+            "query": self.contentFilter,
         })
+        kw.update(globs)
         try:
             return eval(code, kw)
         except Exception as exc:
             return repr(exc)
+
+    def folderitems(self):
+        self.inflate_params()
+        return super(DataBoxView, self).folderitems()
 
     def folderitem(self, obj, item, index):
         """Applies new properties to the item being rendered in the list

@@ -34,6 +34,17 @@ PARENT_TYPES = {
     "Batch": "AnalysisRequest",
 }
 
+
+PARAMETER_TYPES = {
+    "str": "String",
+    "int": "Integer",
+    "float": "Float",
+    "bool": "Boolean",
+    "list": "List",
+    "datetime": "DateTime",
+    "expression": "Expression",
+}
+
 # TODO: Move to registry config
 IGNORE_FIELDS = [
     "allowDiscussion",

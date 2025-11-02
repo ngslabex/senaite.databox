@@ -2,6 +2,8 @@
 .installed.cfg
 .mr.developer.cfg
 .projectile
+.idea/*
+.DS_Store*
 bin
 build
 develop-eggs

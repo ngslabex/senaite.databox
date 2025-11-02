@@ -1,7 +1,7 @@
 1.6.0 (unreleased)
 ------------------
 
-- no changes yet
+- #38 Introduce Parameters and Other Minor Improvements
 
 
 1.5.0 (2025-04-04)

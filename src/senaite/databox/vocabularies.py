@@ -22,6 +22,7 @@ from bika.lims import api
 from senaite.databox.behaviors.databox import IDataBoxBehavior
 from senaite.databox.config import NON_QUERYABLE_TYPES
 from senaite.databox.config import DATE_INDEX_TYPES
+from senaite.databox.config import PARAMETER_TYPES
 from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
@@ -117,3 +118,16 @@ class QueryTypesVocabulary(object):
 
 
 QueryTypesVocabularyFactory = QueryTypesVocabulary()
+
+
+@implementer(IVocabularyFactory)
+class ParameterTypesVocabulary(object):
+
+    def __call__(self, context):
+        vocab = []
+        for value, title in PARAMETER_TYPES.items():
+            vocab.append(SimpleTerm(value, value, title))
+        return SimpleVocabulary(vocab)
+
+
+ParameterTypesVocabularyFactory = ParameterTypesVocabulary()

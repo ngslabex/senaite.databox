@@ -62,6 +62,11 @@
       component="senaite.databox.vocabularies.DateIndexesVocabularyFactory"
       name="senaite.databox.vocabularies.date_indexes" />
 
+  <!-- Parameter Types Vocabulary -->
+  <utility
+      component="senaite.databox.vocabularies.ParameterTypesVocabularyFactory"
+      name="senaite.databox.vocabularies.parameter_types" />
+
   <!-- Generic Setup *INSTALL* Profile -->
   <genericsetup:registerProfile
       name="default"
